@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "bcrypt-nodejs": "0.0.3",
+    "bcryptjs": "^2.1.0",
     "bluebird": "1.0.8",
     "body-parser": "^1.5.2",
     "bookshelf": "~0.6.4",
