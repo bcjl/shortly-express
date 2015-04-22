@@ -5,7 +5,8 @@ var bodyParser = require('body-parser');
 var session = require('express-session');
 var bcrypt = require('bcryptjs');
 var knex = require('knex')
-
+var passport = require('passport');
+var GitHubStrategy = require('passport-github').Strategy;
 
 var db = require('./app/config');
 var Users = require('./app/collections/users');
@@ -29,6 +30,29 @@ app.use(session({
   secret: 'thisbesecret',
   saveUnitialized: false
 }));
+
+app.use(passport.initialize());
+app.use(passport.session());
+
+passport.serializeUser(function(user, done) {
+  done(null, user);
+});
+
+passport.deserializeUser(function(obj, done) {
+  done(null, obj);
+})
+
+passport.use(new GitHubStrategy({
+    clientID: '67b15a2f1e142c230a6e',
+    clientSecret: '19566e10f1b84f349d422c2214ac36cfbc4e61da',
+    callbackURL: "http://localhost:4568/github/callback"
+  },
+  function(accessToken, refreshToken, profile, done) {
+    process.nextTick(function(){
+      return done(null, profile)
+    })
+  }
+));
 
 
 app.get('/',
@@ -106,6 +130,17 @@ function(req, res) {
   });
 });
 
+app.get('/github',
+  passport.authenticate('github'),
+  function(req, res){
+});
+
+app.get('/github/callback',
+  passport.authenticate('github', { failureRedirect: '/login' }),
+    function(req, res) {
+      req.session.user = req.user;
+      res.redirect('/');
+  });
 /************************************************************/
 // Write your authentication routes here
 /************************************************************/
