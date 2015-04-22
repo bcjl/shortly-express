@@ -112,33 +112,27 @@ function(req, res) {
 
 app.post( '/signup',
   function(req, res){
-    res.location('/')
-    new User ({username: req.body.username})
+    var username = req.body.username;
+    var password = req.body.password;
+
+    new User ({username: req.body.username, })
       .fetch()
       .then(function(found){
         if(found){
           console.log('username taken: ', req.body.username);
-          res.redirect('/signup')
+          res.redirect('/signup');
         } else {
-          bcrypt.genSalt(10, function(err, salt) {
-            bcrypt.hash(req.body.password, salt, function(err, hash) {
         // Store hash in your password DB.
               var user = new User ({
-                username: req.body.username,
-                password: hash,
-                salt: salt
+                username: username,
+                password: password,
               });
+
               user.save().then(function(newUser){
-                Users.add(newUser);
-                req.session.user = newUser.attributes.username;
+                req.session.user = newUser.get('username');
                 res.redirect('/');
               });
-            });
-          });
-
-
         }
-
       },
       function(err){
         console.log(err);
@@ -153,20 +147,15 @@ app.post('/login',
         if(!found){
           res.redirect('/login');
         } else {
-          var userSalt = found.get('salt');
-          bcrypt.hash(req.body.password, userSalt, function(err, hash){
-            new User ({
-              username: req.body.username,
-              password: hash
-            })
-              .fetch().then(function(found){
-                if(found){
-                  req.session.user = found.attributes.username;
-                  res.redirect('/')
-                } else {
-                  res.redirect('/login')
-                }
-              });
+          found.passwordCompare(req.body.password, function(match){
+            console.log(match)
+            if (match){
+              req.session.user= found.get('username');
+              console.log(req.session.user)
+              res.redirect('/');
+            } else {
+              res.redirect ('/login');
+            }
           });
         }
       });
